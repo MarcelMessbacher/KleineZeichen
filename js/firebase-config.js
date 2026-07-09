@@ -16,13 +16,15 @@
 // =========================================================
 
 export const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
-  authDomain: "DEIN_PROJEKT.firebaseapp.com",
-  projectId: "DEIN_PROJEKT",
-  storageBucket: "DEIN_PROJEKT.appspot.com",
-  messagingSenderId: "DEINE_SENDER_ID",
-  appId: "DEINE_APP_ID"
+  apiKey: "AIzaSyDixZtQ7jyQ4B1oowzjj_8YFhg2I2fvxqA",
+  authDomain: "kleinezeichen-dec16.firebaseapp.com",
+  projectId: "kleinezeichen-dec16",
+  storageBucket: "kleinezeichen-dec16.firebasestorage.app",
+  messagingSenderId: "634027298811",
+  appId: "1:634027298811:web:1240a3541e32197442055e",
 };
 
 // Name der Firestore-Collection, in der Bestellungen gespeichert werden
 export const ORDERS_COLLECTION = "bestellungen";
+export const EMAIL_EINWILLIGUNG_COLLECTION = "email_einwilligungen";
+export const COUNTERS_COLLECTION = "zaehler";

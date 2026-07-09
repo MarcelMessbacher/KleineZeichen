@@ -124,17 +124,15 @@ function renderOrders() {
 
   ordersBody.innerHTML = gefiltert
     .map((b) => {
-      const kunde = b.kunde || {};
-      const adresse = b.lieferadresse || {};
       const status = b.status || "neu";
 
       return `
       <tr data-id="${b.id}">
         <td><strong>${b.bestellnummer || "–"}</strong></td>
         <td>${formatDatum(b.erstelltAm)}</td>
-        <td>${kunde.vorname || ""} ${kunde.nachname || ""}<br>
-            <a href="mailto:${kunde.email || ""}" style="font-size:0.85rem;">${kunde.email || ""}</a></td>
-        <td>${adresse.strasse || ""}<br>${adresse.plz || ""} ${adresse.ort || ""}</td>
+        <td>${b.vorname || ""} ${b.nachname || ""}<br>
+            <a href="mailto:${b.email || ""}" style="font-size:0.85rem;">${b.email || ""}</a></td>
+        <td>${b.lieferungStrasse || ""}<br>${b.lieferungPlz || ""} ${b.lieferungOrt || ""} ${b.lieferungLand && b.lieferungLand !== "Deutschland" ? "(" + b.lieferungLand + ")" : ""}</td>
         <td>${b.menge ?? 1}</td>
         <td>${eur(b.gesamtbetrag)}</td>
         <td>${b.zahlungsart || "–"}</td>

@@ -4,11 +4,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
-  collection,
-  addDoc,
+  doc,
+  runTransaction,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig, ORDERS_COLLECTION } from "./firebase-config.js";
+import {
+  firebaseConfig,
+  ORDERS_COLLECTION,
+  EMAIL_EINWILLIGUNG_COLLECTION,
+  COUNTERS_COLLECTION
+} from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -23,6 +28,26 @@ function berechneVersand(menge) {
 }
 
 const eur = (n) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+
+// ---------------------------------------------------------------------
+// Fortlaufende IDs (1, 2, 3, ...) statt zufälliger Firestore-Doc-IDs
+// ---------------------------------------------------------------------
+async function speichereMitFortlaufenderId(collectionName, daten) {
+  const counterRef = doc(db, COUNTERS_COLLECTION, collectionName);
+
+  return await runTransaction(db, async (transaction) => {
+    const counterSnap = await transaction.get(counterRef);
+    const aktuellerWert = counterSnap.exists() ? counterSnap.data().wert || 0 : 0;
+    const neueId = aktuellerWert + 1;
+
+    transaction.set(counterRef, { wert: neueId });
+
+    const neuerDocRef = doc(db, collectionName, String(neueId));
+    transaction.set(neuerDocRef, { id: neueId, ...daten });
+
+    return neueId;
+  });
+}
 
 function generateBestellnummer() {
   const datum = new Date();
@@ -125,31 +150,29 @@ document.addEventListener("DOMContentLoaded", () => {
     versandpakete: pakete,
     versandkosten,
     gesamtbetrag: Math.round(gesamt * 100) / 100,
-      kunde: {
-        anrede: form.anrede.value,
-        vorname: form.vorname.value.trim(),
-        nachname: form.nachname.value.trim(),
-        email: form.email.value.trim(),
-        telefon: form.telefon.value.trim()
-      },
-      lieferadresse: {
-        strasse: form.lieferung_strasse.value.trim(),
-        plz: form.lieferung_plz.value.trim(),
-        ort: form.lieferung_ort.value.trim(),
-        land: form.lieferung_land.value
-      },
-      rechnungsadresseGleichLieferadresse: gleicheAdresse,
-      rechnungsadresse: gleicheAdresse
-        ? null
-        : {
-            strasse: form.rechnung_strasse.value.trim(),
-            plz: form.rechnung_plz.value.trim(),
-            ort: form.rechnung_ort.value.trim()
-          },
-      anmerkung: form.anmerkung.value.trim(),
-      newsletterOptIn: form.newsletter.checked
-    };
-  }
+
+    // Kontaktdaten – jeder Wert eine eigene Spalte
+    anrede: form.anrede.value,
+    vorname: form.vorname.value.trim(),
+    nachname: form.nachname.value.trim(),
+    email: form.email.value.trim(),
+    telefon: form.telefon.value.trim(),
+
+    // Lieferadresse
+    lieferungStrasse: form.lieferung_strasse.value.trim(),
+    lieferungPlz: form.lieferung_plz.value.trim(),
+    lieferungOrt: form.lieferung_ort.value.trim(),
+    lieferungLand: form.lieferung_land.value,
+
+    // Rechnungsadresse
+    rechnungGleichLieferadresse: gleicheAdresse,
+    rechnungStrasse: gleicheAdresse ? "" : form.rechnung_strasse.value.trim(),
+    rechnungPlz: gleicheAdresse ? "" : form.rechnung_plz.value.trim(),
+    rechnungOrt: gleicheAdresse ? "" : form.rechnung_ort.value.trim(),
+
+    newsletterOptIn: form.newsletter.checked
+  };
+}
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -169,7 +192,20 @@ document.addEventListener("DOMContentLoaded", () => {
     submitBtn.textContent = "Bestellung wird gesendet …";
 
     try {
-      await addDoc(collection(db, ORDERS_COLLECTION), bestellung);
+      await speichereMitFortlaufenderId(ORDERS_COLLECTION, bestellung);
+
+      // Nur E-Mail-Adressen speichern, die aktiv der werblichen Ansprache
+      // zugestimmt haben (Newsletter-Checkbox). Alle anderen werden NICHT
+      // in dieser Tabelle abgelegt.
+      if (bestellung.newsletterOptIn) {
+        await speichereMitFortlaufenderId(EMAIL_EINWILLIGUNG_COLLECTION, {
+          email: bestellung.email,
+          vorname: bestellung.vorname,
+          nachname: bestellung.nachname,
+          einwilligungAm: serverTimestamp(),
+          quelle: "bestellformular"
+        });
+      }
 
       // Hinweis: Der automatische Versand der Bestellbestätigungs-E-Mail
       // erfolgt idealerweise über eine Firebase Cloud Function, die bei
@@ -183,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <h2 style="color:#1a6a5f;margin-top:0;">Vielen Dank für deine Bestellung! 🎉</h2>
           <p>Deine Bestellnummer lautet <strong>${bestellnummer}</strong>.</p>
           <p>Wir haben deine Bestellung erhalten und senden dir in Kürze eine Bestätigung per E-Mail an
-             <strong>${bestellung.kunde.email}</strong>.</p>
+             <strong>${bestellung.email}</strong>.</p>
           ${
             bestellung.zahlungsart === "ueberweisung"
               ? `<p>Bitte überweise <strong>${eur(bestellung.gesamtbetrag)}</strong> unter Angabe der
