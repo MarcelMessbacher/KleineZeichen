@@ -38,7 +38,7 @@ const eur = (n) => n.toLocaleString("de-DE", { style: "currency", currency: "EUR
 // ---------------------------------------------------------------------
 // Fortlaufende IDs (1, 2, 3, ...) statt zufälliger Firestore-Doc-IDs
 // ---------------------------------------------------------------------
-async function speichereMitFortlaufenderId(collectionName, daten) {
+async function speichereMitFortlaufenderId(collectionName, datenOderFactory) {
   const counterRef = doc(db, COUNTERS_COLLECTION, collectionName);
 
   return await runTransaction(db, async (transaction) => {
@@ -48,6 +48,12 @@ async function speichereMitFortlaufenderId(collectionName, daten) {
 
     transaction.set(counterRef, { wert: neueId });
 
+    // datenOderFactory kann entweder ein fertiges Objekt sein, oder eine
+    // Funktion, die die neue ID übergeben bekommt (z. B. um daraus die
+    // Bestellnummer abzuleiten, bevor das Dokument geschrieben wird).
+    const daten =
+      typeof datenOderFactory === "function" ? datenOderFactory(neueId) : datenOderFactory;
+
     const neuerDocRef = doc(db, collectionName, String(neueId));
     transaction.set(neuerDocRef, { id: neueId, ...daten });
 
@@ -55,13 +61,9 @@ async function speichereMitFortlaufenderId(collectionName, daten) {
   });
 }
 
-function generateBestellnummer() {
-  const datum = new Date();
-  const y = datum.getFullYear().toString().slice(-2);
-  const m = String(datum.getMonth() + 1).padStart(2, "0");
-  const d = String(datum.getDate()).padStart(2, "0");
-  const zufall = Math.floor(1000 + Math.random() * 9000);
-  return `GA-${y}${m}${d}-${zufall}`;
+// Bestellnummer aus der fortlaufenden ID ableiten: B0000001, B0000002, ...
+function formatBestellnummer(id) {
+  return `B${String(id).padStart(7, "0")}`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -138,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return gueltig;
   }
 
-  function baueBestellObjekt(bestellnummer) {
+  function baueBestellObjekt() {
   const gleicheAdresse = rechnungGleich.checked;
   const zahlungsart = form.querySelector('input[name="zahlungsart"]:checked').value;
   const menge = parseInt(mengeInput.value, 10) || 1;
@@ -146,7 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const gesamt = menge * EINZELPREIS + versandkosten;
 
   return {
-    bestellnummer,
     erstelltAm: serverTimestamp(),
     status: "neu",
     zahlungsstatus: "offen",
@@ -191,15 +192,19 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const bestellnummer = generateBestellnummer();
-    const bestellung = baueBestellObjekt(bestellnummer);
+    const bestellungBasis = baueBestellObjekt();
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Bestellung wird gesendet …";
 
     try {
-      await speichereMitFortlaufenderId(ORDERS_COLLECTION, bestellung);
-
+      const neueId = await speichereMitFortlaufenderId(ORDERS_COLLECTION, (id) => ({
+        ...bestellungBasis,
+        bestellnummer: formatBestellnummer(id)
+      }));
+      const bestellnummer = formatBestellnummer(neueId);
+      const bestellung = { ...bestellungBasis, bestellnummer };
+	  
       // Nur E-Mail-Adressen speichern, die aktiv der werblichen Ansprache
       // zugestimmt haben (Newsletter-Checkbox). Alle anderen werden NICHT
       // in dieser Tabelle abgelegt.
