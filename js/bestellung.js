@@ -5,6 +5,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getFirestore,
   doc,
+  collection,
+  addDoc,
   runTransaction,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -12,17 +14,13 @@ import {
   firebaseConfig,
   ORDERS_COLLECTION,
   EMAIL_EINWILLIGUNG_COLLECTION,
-  COUNTERS_COLLECTION
+  COUNTERS_COLLECTION,
+  MAIL_COLLECTION,
+  MAIL_TEMPLATE_BESTELLBESTAETIGUNG
 } from "./firebase-config.js";
-import {
-  EMAILJS_PUBLIC_KEY,
-  EMAILJS_SERVICE_ID,
-  EMAILJS_TEMPLATE_ID
-} from "./emailjs-config.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
 const EINZELPREIS = 12.90;
 const VERSAND = 2.90; // Versandkosten pro Paket/Karton innerhalb Deutschlands
@@ -226,33 +224,38 @@ document.addEventListener("DOMContentLoaded", () => {
       // automatisch eine E-Mail an den Kunden verschickt.
 
 
-	  // Bestellbestätigung per E-Mail verschicken (EmailJS).
-      // Bewusst NICHT mit await blockierend + ohne die Bestellung
-      // scheitern zu lassen, falls der Mailversand mal klemmt:
-      // Die Bestellung ist zu diesem Zeitpunkt bereits sicher in
-      // Firestore gespeichert.
+	  // Bestellbestätigung per E-Mail verschicken – über die Firebase-Extension
+      // "Trigger Email from Firestore": Wir legen dazu lediglich ein Dokument
+      // in der "mail"-Collection an, den eigentlichen Versand (inkl. Rendern
+      // des Handlebars-Templates) übernimmt die Extension serverseitig.
+      // Bewusst NICHT blockierend + ohne die Bestellung scheitern zu lassen,
+      // falls der Mailversand mal klemmt: Die Bestellung ist zu diesem
+      // Zeitpunkt bereits sicher in Firestore gespeichert.
       const zahlungshinweis =
         bestellung.zahlungsart === "ueberweisung"
           ? `Bitte überweise ${eur(bestellung.gesamtbetrag)} unter Angabe der Bestellnummer ${bestellnummer} als Verwendungszweck an: Kontoinhaber: [Ihr Name] · IBAN: [Ihre IBAN] · BIC: [Ihre BIC]`
           : `Die Zahlung per ${bestellung.zahlungsart === "paypal" ? "PayPal" : "Karte (Stripe)"} ist als Platzhalter hinterlegt.`;
 
-      emailjs
-        .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          to_email: bestellung.email,
-          vorname: bestellung.vorname,
-          nachname: bestellung.nachname,
-          bestellnummer,
-          menge: bestellung.menge,
-          gesamtbetrag: eur(bestellung.gesamtbetrag),
-          zahlungshinweis,
-          lieferung_strasse: bestellung.lieferungStrasse,
-          lieferung_plz: bestellung.lieferungPlz,
-          lieferung_ort: bestellung.lieferungOrt,
-          lieferung_land: bestellung.lieferungLand
-        })
-        .catch((err) => {
-          console.error("Bestellbestätigung konnte nicht versendet werden:", err);
-        });
+      addDoc(collection(db, MAIL_COLLECTION), {
+        to: [bestellung.email],
+        template: {
+          name: MAIL_TEMPLATE_BESTELLBESTAETIGUNG,
+          data: {
+            vorname: bestellung.vorname,
+            nachname: bestellung.nachname,
+            bestellnummer,
+            menge: bestellung.menge,
+            gesamtbetrag: eur(bestellung.gesamtbetrag),
+            zahlungshinweis,
+            lieferung_strasse: bestellung.lieferungStrasse,
+            lieferung_plz: bestellung.lieferungPlz,
+            lieferung_ort: bestellung.lieferungOrt,
+            lieferung_land: bestellung.lieferungLand
+          }
+        }
+      }).catch((err) => {
+        console.error("Bestellbestätigung konnte nicht in die Mail-Warteschlange eingetragen werden:", err);
+      });
       document.querySelector(".form-page .container").innerHTML = `
         <div class="form-success" style="max-width:640px;">
           <h2 style="color:#1a6a5f;margin-top:0;">Vielen Dank für deine Bestellung! 🎉</h2>

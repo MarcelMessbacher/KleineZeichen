@@ -28,3 +28,11 @@ export const firebaseConfig = {
 export const ORDERS_COLLECTION = "bestellungen";
 export const EMAIL_EINWILLIGUNG_COLLECTION = "email_einwilligungen";
 export const COUNTERS_COLLECTION = "zaehler";
+
+// Collection, in die die "Trigger Email from Firestore"-Extension schreibt.
+// Jedes Dokument hier löst automatisch einen E-Mail-Versand aus.
+export const MAIL_COLLECTION = "mail";
+
+// Name des Handlebars-Templates (Dokument-ID in der Templates-Collection
+// der Extension), das für die Bestellbestätigung verwendet wird.
+export const MAIL_TEMPLATE_BESTELLBESTAETIGUNG = "bestellbestaetigung";
