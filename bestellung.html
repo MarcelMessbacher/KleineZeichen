@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bestellen – Gebärden-ABC</title>
+<meta name="description" content="Bestelle das Kinderbuch Gebärden-ABC für 12,90 € zzgl. Versand. Zahlung per PayPal, Karte oder Überweisung.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="logo"><img src="images/logo.svg" alt="Gebärden-ABC"></a>
+    <nav class="main-nav" aria-label="Hauptnavigation">
+      <a href="index.html#buch">Das Buch</a>
+      <a href="index.html#warum">Warum Gebärden?</a>
+      <a href="index.html#faq">Fragen</a>
+      <a href="bestellung.html" class="active">Bestellen</a>
+    </nav>
+  </div>
+</header>
+
+<main class="form-page">
+  <div class="container">
+    <h1>Bestellung abschließen</h1>
+    <p style="max-width:640px;">Bitte fülle alle Pflichtfelder (*) aus. Nach Absenden erhältst du automatisch eine Bestellbestätigung per E-Mail.</p>
+
+    <div id="form-alert" class="form-alert" role="alert"></div>
+
+    <form id="order-form" class="form-layout" novalidate>
+
+      <div class="form-main">
+
+        <fieldset>
+          <legend>1. Kontaktdaten</legend>
+
+          <div class="field-row-3">
+            <div class="field">
+              <label for="anrede">Anrede</label>
+              <select id="anrede" name="anrede">
+                <option value="">Keine Angabe</option>
+                <option value="Frau">Frau</option>
+                <option value="Herr">Herr</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="vorname">Vorname *</label>
+              <input type="text" id="vorname" name="vorname" required autocomplete="given-name">
+              <span class="error-text">Bitte gib deinen Vornamen ein.</span>
+            </div>
+            <div class="field">
+              <label for="nachname">Nachname *</label>
+              <input type="text" id="nachname" name="nachname" required autocomplete="family-name">
+              <span class="error-text">Bitte gib deinen Nachnamen ein.</span>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="email">E-Mail-Adresse *</label>
+              <input type="email" id="email" name="email" required autocomplete="email">
+              <span class="hint">Für Bestellbestätigung &amp; Rechnung</span>
+              <span class="error-text">Bitte gib eine gültige E-Mail-Adresse ein.</span>
+            </div>
+            <div class="field">
+              <label for="telefon">Telefon</label>
+              <input type="tel" id="telefon" name="telefon" autocomplete="tel">
+              <span class="hint">Optional, für Rückfragen zum Versand</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>2. Lieferadresse</legend>
+
+          <div class="field-row">
+            <div class="field" style="grid-column:1/-1;">
+              <label for="strasse">Straße &amp; Hausnummer *</label>
+              <input type="text" id="strasse" name="lieferung_strasse" required autocomplete="street-address">
+              <span class="error-text">Bitte gib deine Adresse ein.</span>
+            </div>
+          </div>
+          <div class="field-row-3">
+            <div class="field">
+              <label for="plz">PLZ *</label>
+              <input type="text" id="plz" inputmode="numeric" pattern="[0-9]{4,5}" name="lieferung_plz" required autocomplete="postal-code">
+              <span class="error-text">Bitte gib eine gültige PLZ ein.</span>
+            </div>
+            <div class="field" style="grid-column:span 2;">
+              <label for="ort">Ort *</label>
+              <input type="text" id="ort" name="lieferung_ort" required autocomplete="address-level2">
+              <span class="error-text">Bitte gib deinen Wohnort ein.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="land">Land</label>
+            <select id="land" name="lieferung_land">
+              <option value="Deutschland" selected>Deutschland</option>
+            </select>
+            <span class="hint">Aktuell versenden wir ausschließlich innerhalb Deutschlands.</span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>3. Rechnungsadresse</legend>
+          <div class="checkbox-field">
+            <input type="checkbox" id="rechnung_gleich" name="rechnung_gleich" checked>
+            <label for="rechnung_gleich" style="font-weight:400;">Rechnungsadresse entspricht der Lieferadresse</label>
+          </div>
+
+          <div id="rechnung-felder" style="display:none;">
+            <div class="field-row">
+              <div class="field" style="grid-column:1/-1;">
+                <label for="re_strasse">Straße &amp; Hausnummer</label>
+                <input type="text" id="re_strasse" name="rechnung_strasse" autocomplete="street-address">
+              </div>
+            </div>
+            <div class="field-row-3">
+              <div class="field">
+                <label for="re_plz">PLZ</label>
+                <input type="text" id="re_plz" name="rechnung_plz" autocomplete="postal-code">
+              </div>
+              <div class="field" style="grid-column:span 2;">
+                <label for="re_ort">Ort</label>
+                <input type="text" id="re_ort" name="rechnung_ort" autocomplete="address-level2">
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>4. Zahlungsart *</legend>
+
+          <label class="payment-option">
+            <input type="radio" name="zahlungsart" value="paypal" checked>
+            <div>
+              <strong>PayPal</strong>
+              <div class="small">Bezahle sicher mit deinem PayPal-Konto. (Platzhalter – Anbindung an PayPal Checkout folgt)</div>
+            </div>
+          </label>
+
+          <label class="payment-option">
+            <input type="radio" name="zahlungsart" value="stripe">
+            <div>
+              <strong>Kreditkarte / Klarna / Apple Pay (via Stripe)</strong>
+              <div class="small">Sichere Zahlung über Stripe Checkout. (Platzhalter – Stripe-Integration folgt)</div>
+            </div>
+          </label>
+
+          <label class="payment-option">
+            <input type="radio" name="zahlungsart" value="ueberweisung">
+            <div>
+              <strong>Vorkasse per Überweisung</strong>
+              <div class="small">Der Versand erfolgt nach Zahlungseingang. Bankdaten erhältst du in der Bestellbestätigung.</div>
+            </div>
+          </label>
+
+          <div id="ueberweisung-details" style="display:none;background:var(--color-paper-soft);border-radius:10px;padding:14px 16px;font-size:0.9rem;">
+            Kontoinhaber: [Ihr Name] · IBAN: [Ihre IBAN] · BIC: [Ihre BIC]<br>
+            Verwendungszweck: Deine Bestellnummer (wird nach Absenden angezeigt und per E-Mail zugeschickt)
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>5. Rechtliches</legend>
+          <div class="checkbox-field">
+            <input type="checkbox" id="agb" name="agb_akzeptiert" required>
+            <label for="agb" style="font-weight:400;">
+              Ich habe die <a href="agb.html" target="_blank" rel="noopener">AGB</a> und die
+              <a href="widerruf.html" target="_blank" rel="noopener">Widerrufsbelehrung</a> gelesen und akzeptiere sie. *
+            </label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="datenschutz" name="datenschutz_akzeptiert" required>
+            <label for="datenschutz" style="font-weight:400;">
+              Ich habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> zur Kenntnis genommen. *
+            </label>
+          </div>
+          <div class="checkbox-field">
+            <input type="checkbox" id="newsletter" name="newsletter" value="1">
+            <label for="newsletter" style="font-weight:400;">
+              Ich möchte gelegentlich Neuigkeiten rund um Gebärden-ABC per E-Mail erhalten (jederzeit widerrufbar).
+            </label>
+          </div>
+        </fieldset>
+
+      </div>
+
+      <aside class="form-summary">
+		<div class="summary-card">
+		  <h3>Deine Bestellung</h3>
+
+		  <div class="field" style="margin-bottom:20px;">
+			<label for="menge" style="font-size:0.85rem;">Anzahl Exemplare</label>
+			<input type="number" id="menge" name="menge" min="1" max="20" value="1" style="max-width:100px;">
+		  </div>
+
+		  <div class="summary-line">
+            <span id="summary-qty">1× Gebärden-ABC</span>
+            <span id="summary-item-total">12,90 €</span>
+          </div>
+          <div class="summary-line">
+            <span>Versand (Deutschland)</span>
+            <span id="summary-shipping">2,90 €</span>
+          </div>
+          <div class="summary-total">
+            <span>Gesamt</span>
+            <span id="summary-total">15,80 €</span>
+          </div>
+          <p class="hint" style="margin-top:10px;">Alle Preise inkl. gesetzlicher MwSt.</p>
+          <button type="submit" class="btn btn-primary btn-block" style="margin-top:14px;">
+            Zahlungspflichtig bestellen
+          </button>
+          <p class="hint" style="margin-top:10px;">
+            Mit Klick auf „Zahlungspflichtig bestellen“ gibst du eine verbindliche Bestellung ab.
+          </p>
+        </div>
+      </aside>
+    </form>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>© <span id="year"></span> Kleine Zeichen</div>
+    <div class="footer-links">
+      <a href="impressum.html">Impressum</a>
+      <a href="datenschutz.html">Datenschutz</a>
+      <a href="agb.html">AGB</a>
+      <a href="widerruf.html">Widerrufsrecht</a>
+    </div>
+  </div>
+</footer>
+
+<div id="cookie-banner" role="dialog" aria-label="Cookie-Hinweis" aria-live="polite">
+  <p>Wir verwenden nur technisch notwendige Cookies. Mehr dazu in unserer <a href="datenschutz.html" style="color:#fff;text-decoration:underline;">Datenschutzerklärung</a>.</p>
+  <div class="cookie-actions">
+    <button type="button" id="cookie-accept-all" class="btn btn-primary" style="padding:10px 18px;font-size:0.9rem;">Alle akzeptieren</button>
+    <button type="button" id="cookie-essential-only" class="btn btn-secondary" style="padding:10px 18px;font-size:0.9rem;">Nur notwendige</button>
+  </div>
+</div>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="js/cookie-consent.js"></script>
+<script type="module" src="js/bestellung.js"></script>
+</body>
+</html>
