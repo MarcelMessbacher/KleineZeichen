@@ -11,6 +11,10 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
+  getFunctions,
+  httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+import {
   firebaseConfig,
   ORDERS_COLLECTION,
   EMAIL_EINWILLIGUNG_COLLECTION,
@@ -21,6 +25,7 @@ import {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const functions = getFunctions(app);
 
 const EINZELPREIS = 12.90;
 const VERSAND = 2.90; // Versandkosten pro Paket/Karton innerhalb Deutschlands
@@ -214,6 +219,32 @@ document.addEventListener("DOMContentLoaded", () => {
           einwilligungAm: serverTimestamp(),
           quelle: "bestellformular"
         });
+      }
+
+      // Bei Stripe zahlt der Kunde jetzt bei Stripe – die Bestellung ist zwar
+      // schon in Firestore gespeichert (status "neu" / zahlungsstatus "offen"),
+      // aber die Bestätigungsmail und die Erfolgsseite übernimmt danach der
+      // Stripe-Webhook (setzt zahlungsstatus auf "bezahlt"), NICHT hier.
+      if (bestellung.zahlungsart === "stripe") {
+        submitBtn.textContent = "Weiterleitung zur Zahlung …";
+
+        const createCheckoutSession = httpsCallable(functions, "createCheckoutSession");
+        const { data } = await createCheckoutSession({
+          items: [
+            { name: "Gebärden-ABC", price: bestellung.einzelpreis, quantity: bestellung.menge },
+            {
+              name: bestellung.versandpakete > 1
+                ? `Versand (${bestellung.versandpakete}× Paket)`
+                : "Versand",
+              price: bestellung.versandkosten,
+              quantity: 1
+            }
+          ],
+          orderId: String(neueId) // identisch mit der Firestore-Doc-ID in ORDERS_COLLECTION
+        });
+
+        window.location.href = data.url; // Weiterleitung zu Stripe Checkout
+        return; // ab hier nicht mehr weiterlaufen – kein addDoc/Erfolgsscreen
       }
 
       // Hinweis: Der automatische Versand der Bestellbestätigungs-E-Mail
